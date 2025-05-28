@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Futures Trading PnL Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            max-width: 400px;
+        }
+        label {
+            margin-top: 10px;
+            display: block;
+        }
+        input, select {
+            padding: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Futures Trading PnL Calculator</h2>
+
+    <label for="positionType">Position Type:</label>
+    <select id="positionType">
+        <option value="long">Long</option>
+        <option value="short">Short</option>
+    </select>
+
+    <label for="leverage">Leverage (e.g. 10):</label>
+    <input type="number" id="leverage" min="1" step="0.1">
+
+    <label for="margin">Margin ($):</label>
+    <input type="number" id="margin" min="0.01" step="0.01">
+
+    <label for="entryPrice">Entry Price:</label>
+    <input type="number" id="entryPrice" step="0.01">
+
+    <label for="profitPrice">Target Price (Profit Price):</label>
+    <input type="number" id="profitPrice" step="0.01">
+
+    <label for="stopLoss">Stop Loss Price:</label>
+    <input type="number" id="stopLoss" step="0.01">
+
+    <button onclick="calculatePnL()">Calculate</button>
+
+    <div id="result"></div>
+
+    <script>
+        function calculatePnL() {
+            const positionType = document.getElementById("positionType").value;
+            const leverage = parseFloat(document.getElementById("leverage").value);
+            const margin = parseFloat(document.getElementById("margin").value);
+            const entryPrice = parseFloat(document.getElementById("entryPrice").value);
+            const profitPrice = parseFloat(document.getElementById("profitPrice").value);
+            const stopLoss = parseFloat(document.getElementById("stopLoss").value);
+
+            if ([leverage, margin, entryPrice, profitPrice, stopLoss].some(isNaN)) {
+                alert("Please fill in all fields with valid numbers.");
+                return;
+            }
+
+            const positionSize = (margin * leverage) / entryPrice;
+
+            let profitPnL, lossPnL;
+
+            if (positionType === "long") {
+                profitPnL = (profitPrice - entryPrice) * positionSize;
+                lossPnL = (stopLoss - entryPrice) * positionSize;
+            } else if (positionType === "short") {
+                profitPnL = (entryPrice - profitPrice) * positionSize;
+                lossPnL = (entryPrice - stopLoss) * positionSize;
+            }
+
+            document.getElementById("result").innerHTML = `
+                <p>🧮 <strong>Position:</strong> ${positionType.toUpperCase()}</p>
+                <p>📈 <strong>Profit PnL:</strong> $${profitPnL.toFixed(2)}</p>
+                <p>📉 <strong>Loss PnL:</strong> $${lossPnL.toFixed(2)}</p>
+            `;
+        }
+    </script>
+
+</body>
+</html>
