@@ -1,66 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Futures Trading PnL Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
+            background-color: black;
+            color: Lime;
+            padding: 40px;
             max-width: 400px;
+            margin: auto;
         }
+
         label {
             margin-top: 10px;
             display: block;
+            color: yellow;
         }
+
         input, select {
-            padding: 5px;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 15px;
             width: 100%;
             box-sizing: border-box;
+            background-color: #222;
+            color: green;
+            border: 1px solid red;
         }
+
         button {
-            margin-top: 20px;
+            background-color: Green;
+            color: black;
             padding: 10px;
-            width: 100%;
-            background-color: #007bff;
-            color: white;
             border: none;
+            width: 100%;
             font-size: 16px;
             cursor: pointer;
         }
+
         button:hover {
-            background-color: #0056b3;
+            background-color: darkred;
         }
+
         #result {
             margin-top: 20px;
-            padding: 10px;
-            background-color: #f1f1f1;
-            border: 1px solid #ccc;
+            padding: 15px;
+            background-color: #111;
+            border: 1px solid red;
+            color: limegreen;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <h2>Futures Trading PnL Calculator</h2>
+    <h2>📈 Futures Trading PnL Calculator</h2>
 
-    <label for="positionType">Position Type:</label>
+    <label for="positionType">Position Type</label>
     <select id="positionType">
         <option value="long">Long</option>
         <option value="short">Short</option>
     </select>
 
-    <label for="leverage">Leverage (e.g. 10):</label>
+    <label for="leverage">Enter Leverage</label>
     <input type="number" id="leverage" min="1" step="0.1">
 
-    <label for="margin">Margin ($):</label>
+    <label for="margin">Margin/Amount $</label>
     <input type="number" id="margin" min="0.01" step="0.01">
 
-    <label for="entryPrice">Entry Price:</label>
+    <label for="entryPrice">Entry Price</label>
     <input type="number" id="entryPrice" step="0.01">
 
-    <label for="profitPrice">Target Price (Profit Price):</label>
+    <label for="profitPrice">Target Price (TP)</label>
     <input type="number" id="profitPrice" step="0.01">
 
-    <label for="stopLoss">Stop Loss Price:</label>
+    <label for="stopLoss">Stop Loss Price</label>
     <input type="number" id="stopLoss" step="0.01">
 
     <button onclick="calculatePnL()">Calculate</button>
@@ -88,15 +104,15 @@
             if (positionType === "long") {
                 profitPnL = (profitPrice - entryPrice) * positionSize;
                 lossPnL = (stopLoss - entryPrice) * positionSize;
-            } else if (positionType === "short") {
+            } else {
                 profitPnL = (entryPrice - profitPrice) * positionSize;
                 lossPnL = (entryPrice - stopLoss) * positionSize;
             }
 
             document.getElementById("result").innerHTML = `
-                <p>🧮 <strong>Position:</strong> ${positionType.toUpperCase()}</p>
-                <p>📈 <strong>Profit PnL:</strong> $${profitPnL.toFixed(2)}</p>
-                <p>📉 <strong>Loss PnL:</strong> $${lossPnL.toFixed(2)}</p>
+                <p>🧮 Position: ${positionType.toUpperCase()}</p>
+                <p>📈 Profit PnL: $${profitPnL.toFixed(2)}</p>
+                <p>📉 Loss PnL: $${lossPnL.toFixed(2)}</p>
             `;
         }
     </script>
