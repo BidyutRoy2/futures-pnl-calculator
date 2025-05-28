@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Futures Trading PnL Calculator</title>
     <style>
         body {
@@ -19,7 +19,8 @@
             color: yellow;
         }
 
-        input, select {
+        input,
+        select {
             padding: 8px;
             margin-top: 5px;
             margin-bottom: 15px;
@@ -28,6 +29,11 @@
             background-color: #222;
             color: green;
             border: 1px solid red;
+        }
+
+        input[readonly] {
+            background-color: #111;
+            border: 1px solid darkgreen;
         }
 
         button {
@@ -44,6 +50,20 @@
             background-color: darkred;
         }
 
+        /* Buttons for slider adjustment */
+        .slider-control {
+            width: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #222;
+            color: lime;
+            border: 1px solid lime;
+            user-select: none;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 4px;
+        }
+
         #result {
             margin-top: 20px;
             padding: 15px;
@@ -52,10 +72,27 @@
             color: limegreen;
             font-weight: bold;
         }
+
+        /* Flex container for slider + buttons */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+
+        #percentDisplay {
+            width: 40px;
+            text-align: center;
+            color: lime;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
-
     <h2>📈 Futures Trading PnL Calculator</h2>
 
     <label for="positionType">Position Type</label>
@@ -64,42 +101,115 @@
         <option value="short">Short</option>
     </select>
 
+    <label for="marginMode">Margin Mode</label>
+    <select id="marginMode" onchange="toggleBalanceField()">
+        <option value="isolated">Isolated</option>
+        <option value="cross">Cross</option>
+    </select>
+
+    <div id="balanceField" style="display: none;">
+        <label for="balancePercent">Account Usage % (Cross)</label>
+        <div class="slider-container">
+            <div class="slider-control" onclick="changeBalancePercent(-1)">−</div>
+            <input
+                type="range"
+                id="balancePercent"
+                min="1"
+                max="100"
+                value="25"
+                oninput="updateBalanceEstimate()"
+            />
+            <div class="slider-control" onclick="changeBalancePercent(1)">+</div>
+            <span id="percentDisplay">25%</span>
+        </div>
+
+        <label for="calculatedBalance">Estimated Account Balance ($)</label>
+        <input type="number" id="calculatedBalance" readonly />
+    </div>
+
     <label for="leverage">Enter Leverage</label>
-    <input type="number" id="leverage" min="1" step="0.1">
+    <input type="number" id="leverage" min="1" step="0.1" />
 
     <label for="margin">Margin/Amount $</label>
-    <input type="number" id="margin" min="0.01" step="0.01">
+    <input
+        type="number"
+        id="margin"
+        min="0.01"
+        step="0.01"
+        oninput="updateBalanceEstimate()"
+    />
 
     <label for="entryPrice">Entry Price</label>
-    <input type="number" id="entryPrice" step="0.01">
+    <input type="number" id="entryPrice" step="0.01" />
 
     <label for="profitPrice">Target Price (TP)</label>
-    <input type="number" id="profitPrice" step="0.01">
+    <input type="number" id="profitPrice" step="0.01" />
 
     <label for="stopLoss">Stop Loss Price</label>
-    <input type="number" id="stopLoss" step="0.01">
+    <input type="number" id="stopLoss" step="0.01" />
 
     <button onclick="calculatePnL()">Calculate</button>
 
     <div id="result"></div>
 
     <script>
+        function toggleBalanceField() {
+            const marginMode = document.getElementById("marginMode").value;
+            const balanceField = document.getElementById("balanceField");
+            balanceField.style.display = marginMode === "cross" ? "block" : "none";
+            updateBalanceEstimate();
+        }
+
+        function updateBalanceEstimate() {
+            const margin = parseFloat(document.getElementById("margin").value);
+            const percent = parseFloat(document.getElementById("balancePercent").value);
+            const display = document.getElementById("percentDisplay");
+            const calculated = document.getElementById("calculatedBalance");
+
+            display.textContent = percent + "%";
+
+            if (!isNaN(margin) && percent > 0) {
+                const balance = margin / (percent / 100);
+                calculated.value = balance.toFixed(2);
+            } else {
+                calculated.value = "";
+            }
+        }
+
+        function changeBalancePercent(delta) {
+            const slider = document.getElementById("balancePercent");
+            let newValue = parseInt(slider.value) + delta;
+            if (newValue < parseInt(slider.min)) newValue = parseInt(slider.min);
+            if (newValue > parseInt(slider.max)) newValue = parseInt(slider.max);
+            slider.value = newValue;
+            updateBalanceEstimate();
+        }
+
         function calculatePnL() {
             const positionType = document.getElementById("positionType").value;
+            const marginMode = document.getElementById("marginMode").value;
             const leverage = parseFloat(document.getElementById("leverage").value);
             const margin = parseFloat(document.getElementById("margin").value);
             const entryPrice = parseFloat(document.getElementById("entryPrice").value);
             const profitPrice = parseFloat(document.getElementById("profitPrice").value);
             const stopLoss = parseFloat(document.getElementById("stopLoss").value);
+            const accountBalance = parseFloat(
+                document.getElementById("calculatedBalance").value
+            );
 
             if ([leverage, margin, entryPrice, profitPrice, stopLoss].some(isNaN)) {
                 alert("Please fill in all fields with valid numbers.");
                 return;
             }
 
+            if (marginMode === "cross" && isNaN(accountBalance)) {
+                alert("Please adjust the account % slider to generate a balance.");
+                return;
+            }
+
             const positionSize = (margin * leverage) / entryPrice;
 
-            let profitPnL, lossPnL;
+            let profitPnL, lossPnL, liquidationText;
 
             if (positionType === "long") {
                 profitPnL = (profitPrice - entryPrice) * positionSize;
@@ -109,13 +219,35 @@
                 lossPnL = (entryPrice - stopLoss) * positionSize;
             }
 
+            // Liquidation price logic
+            if (marginMode === "isolated") {
+                const liquidationPrice =
+                    positionType === "long"
+                        ? entryPrice - entryPrice / leverage
+                        : entryPrice + entryPrice / leverage;
+                liquidationText = `⚠️ Est. Liquidation Price (Isolated): $${liquidationPrice.toFixed(
+                    2
+                )}`;
+            } else {
+                const liquidationPrice =
+                    positionType === "long"
+                        ? entryPrice - (entryPrice * margin) / accountBalance
+                        : entryPrice + (entryPrice * margin) / accountBalance;
+                liquidationText = `⚠️ Est. Liquidation Price (Cross - % based): $${liquidationPrice.toFixed(
+                    2
+                )}`;
+            }
+
             document.getElementById("result").innerHTML = `
-                <p>🧮 Position: ${positionType.toUpperCase()}</p>
+                <p>🧮 Position: ${positionType.toUpperCase()} | Mode: ${marginMode.toUpperCase()}</p>
                 <p>📈 Profit PnL: $${profitPnL.toFixed(2)}</p>
-                <p>📉 Loss PnL: $${lossPnL.toFixed(2)}</p>
+                <p>📉 Loss PnL: $${Math.abs(lossPnL).toFixed(2)}</p>
+                <p>${liquidationText}</p>
             `;
         }
-    </script>
 
+        // Initialize on load
+        toggleBalanceField();
+    </script>
 </body>
 </html>
